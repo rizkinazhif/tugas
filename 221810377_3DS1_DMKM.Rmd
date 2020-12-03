@@ -1,0 +1,56 @@
+---
+title: '221810578'
+author: "Rizki"
+date: "27/10/2020"
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+
+```{r}
+library(naivebayes)
+library(psych)
+library(caret)
+library(e1071)
+
+library(readxl)
+X2014_and_2015_CSM_dataset <- read_excel("2014 and 2015 CSM dataset.xlsx")
+data <- X2014_and_2015_CSM_dataset
+data <- data[,-c(1,2,4,6,7,14)]
+colnames(data)<-c("Ratings","x1","x2","x3","x4","x5","x6","x7")
+head(data)
+sapply(data, function(x) sum(is.na(x)))
+data$Ratings<-as.numeric(data$Ratings)
+data$Ratings<-cut(data$Ratings, breaks = c(0,5,7,Inf), labels = c("rendah","sedang","tinggi"))
+head(data)
+data$x1<-as.factor(data$x1)
+data$x2<-as.factor(data$x2)
+data$x3<-as.factor(data$x3)
+data$x4<-as.factor(data$x4)
+data$x5<-as.factor(data$x5)
+data$x6<-as.factor(data$x6)
+data$x7<-as.factor(data$x7)
+
+```
+
+Pada data diatas menggunakan data dari film untuk mengklasifikasikan dari rating filmnya menggunakan naive bayes. Pada tahap preprosesing diatas mengubah rating menjadi kategori rendah, sedang dan tinggi
+```{r}
+pairs.panels(data)
+```
+Dalam naive bayesian, diperlukan pengujian korelasi antar variabel. Apabila terdapat korelasi yang tinggi (>0,5 atau<-0,5) maka, salah satu atribut tersebut harus dihapur, atau dapat menggunakan metode smoothing laplace saat pembentukan model. Karena semua korelasi tergolong rendah (< 0.5). Maka semua atribut dapat digunakan dalam pembentukan model.
+
+Proses Naive Bayes
+```{r}
+set.seed(123)
+sampel <- sample(2, nrow(data), replace = T, prob = c(0.8,0.2))
+trainingdat <- data[sampel==1, ]
+testingdat <- data[sampel==2, ]
+print(paste("Jumlah Train Data: ", nrow(trainingdat), "| Jumlah Test Data: ", nrow(testingdat)))
+modelnaiv <- naive_bayes(Ratings~.,data=trainingdat)
+modelnaiv
+summary(modelnaiv)
+prediksi <- predict(modelnaiv, testingdat)
+confusionMatrix(table(prediksi,testingdat$Ratings))
+```
+
